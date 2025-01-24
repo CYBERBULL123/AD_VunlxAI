@@ -1,3 +1,5 @@
+# reporting/threat_intelligence.py
+
 from langchain.agents import initialize_agent, Tool
 from langchain.tools import BaseTool
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -6,30 +8,14 @@ import os
 import logging
 from functools import lru_cache
 from typing import Optional
-import streamlit as st
 
-# Load environment variables from .env file (for local development)
+# Load environment variables from .env file
 load_dotenv()
 
-# Function to load the Google API key
-def load_google_api_key():
-    """
-    Load the Google API key from Streamlit secrets or .env file.
-    """
-    # Check Streamlit secrets first
-    if "secrets" in st.secrets and "GOOGLE_API_KEY" in st.secrets["secrets"]:
-        return st.secrets["secrets"]["GOOGLE_API_KEY"]
-    
-    # Fall back to .env file for local development
-    google_api_key = os.getenv("GOOGLE_API_KEY")
-    if google_api_key:
-        return google_api_key
-    
-    # If no key is found, raise an error
-    raise ValueError("GOOGLE_API_KEY not found in Streamlit secrets or .env file. Please add it.")
-
-# Load the Google API key
-GOOGLE_API_KEY = load_google_api_key()
+# Get the Google API key from the environment
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+if not GOOGLE_API_KEY:
+    raise ValueError("GOOGLE_API_KEY not found in .env file. Please add it.")
 
 # Initialize Gemini
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.7)
