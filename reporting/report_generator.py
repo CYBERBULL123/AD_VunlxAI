@@ -1,5 +1,3 @@
-# reporting/report_generator.py
-
 from langchain.agents import initialize_agent, Tool
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
@@ -7,19 +5,35 @@ from langchain_google_genai import ChatGoogleGenerativeAI  # Use Gemini
 import google.generativeai as genai
 from dotenv import load_dotenv
 import os
+import streamlit as st
 from reporting.threat_intelligence import get_threat_intelligence
 
-# Load environment variables from .env file
+# Load environment variables from .env file (for local development)
 load_dotenv()
 
-# Get the Google API key from the environment
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-if not GOOGLE_API_KEY:
-    raise ValueError("GOOGLE_API_KEY not found in .env file. Please add it.")
+# Function to load the Google API key
+def load_google_api_key():
+    """
+    Load the Google API key from Streamlit secrets or .env file.
+    """
+    # Check Streamlit secrets first
+    if "GOOGLE_API_KEY" in st.secrets:
+        return st.secrets["GOOGLE_API_KEY"]
+    
+    # Fall back to .env file for local development
+    google_api_key = os.getenv("GOOGLE_API_KEY")
+    if google_api_key:
+        return google_api_key
+    
+    # If no key is found, raise an error
+    raise ValueError("GOOGLE_API_KEY not found in Streamlit secrets or .env file. Please add it.")
+
+# Load the Google API key
+GOOGLE_API_KEY = load_google_api_key()
 
 # Initialize Gemini
 genai.configure(api_key=GOOGLE_API_KEY)  # Pass the API key to configure Gemini
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.7)
+llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0.7)
 
 # Define a LangChain agent for report generation
 def generate_vulnerability_report(data):
