@@ -147,12 +147,12 @@ When using Docker, the `docker-compose.yml` file automatically loads the `.env` 
 ## 🗂️ **Project Structure**
 
 ```
-AD_VunlxAI/
+AD_VunlxML/
 │
 ├── app.py                       # Main Streamlit application
 ├── config.py                    # Configuration settings
-├── requirements.txt             # Dependencies
-├── README.md                    # Project documentation
+├── requirements.txt             # Python dependencies
+├── packages.txt                 # System dependencies for Streamlit Cloud
 ├── Dockerfile                   # Docker configuration
 ├── docker-compose.yml           # Docker Compose configuration
 ├── .env                         # Environment variables (e.g., Gemini API key)
