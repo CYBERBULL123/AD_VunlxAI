@@ -17,8 +17,8 @@ def load_google_api_key():
     Load the Google API key from Streamlit secrets or .env file.
     """
     # Check Streamlit secrets first
-    if "GOOGLE_API_KEY" in st.secrets:
-        return st.secrets["GOOGLE_API_KEY"]
+    if "secrets" in st.secrets and "GOOGLE_API_KEY" in st.secrets["secrets"]:
+        return st.secrets["secrets"]["GOOGLE_API_KEY"]
     
     # Fall back to .env file for local development
     google_api_key = os.getenv("GOOGLE_API_KEY")
