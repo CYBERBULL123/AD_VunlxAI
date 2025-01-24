@@ -1,0 +1,12 @@
+streamlit
+pandas
+numpy
+scikit-learn
+torch
+plotly
+python-nmap
+scapy
+langchain
+python-dotenv
+langchain-google-genai
+google-generativeai

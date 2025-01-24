@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8501:8501"  # Map port 8501 on the host to port 8501 in the container
+    volumes:
+      - .:/app  # Mount the current directory to /app in the container
+    environment:
+      - PYTHONUNBUFFERED=1
+    stdin_open: true  # Required for Streamlit
+    tty: true         # Required for Streamlit
