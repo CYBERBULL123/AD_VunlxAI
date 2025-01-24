@@ -32,6 +32,10 @@ The **Advanced AI-Powered Vulnerability Scanner** is a cutting-edge cybersecurit
 - Interactive charts (bar, pie, scatter, heatmap, histogram).
 - Visualize **risk scores**, **anomalies**, and **vulnerabilities**.
 
+### 🤖 **AI-Powered Reporting**
+- Generate **intelligent reports** using **Gemini API**.
+- Automatically summarize scan results and provide actionable insights.
+
 ---
 
 ## 🚀 **Getting Started**
@@ -103,9 +107,40 @@ services:
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1
+      - GEMINI_API_KEY=${GEMINI_API_KEY}  # Pass the Gemini API key
     stdin_open: true
     tty: true
 ```
+
+---
+
+## 🔑 **Environment Variables**
+
+To use the **Gemini API** for AI-powered report generation, you need to set up the `GEMINI_API_KEY` environment variable.
+
+### **1. Create a `.env` File**
+Create a `.env` file in the root of your project and add your Gemini API key:
+
+```plaintext
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+### **2. Load Environment Variables**
+The app uses `python-dotenv` to load the `.env` file. Ensure the following code is present in your `app.py`:
+
+```python
+from dotenv import load_dotenv
+import os
+
+# Load environment variables
+load_dotenv()
+
+# Access the Gemini API key
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+```
+
+### **3. Using Docker with `.env`**
+When using Docker, the `docker-compose.yml` file automatically loads the `.env` file and passes the `GEMINI_API_KEY` to the container.
 
 ---
 
@@ -120,6 +155,7 @@ AD_VunlxML/
 ├── README.md                    # Project documentation
 ├── Dockerfile                   # Docker configuration
 ├── docker-compose.yml           # Docker Compose configuration
+├── .env                         # Environment variables (e.g., Gemini API key)
 │
 ├── data_processing/             # Data preprocessing and parsing
 │   ├── __init__.py
@@ -176,6 +212,11 @@ AD_VunlxML/
 - **Interactive Charts**:
   - Bar, pie, scatter, heatmap, and histogram charts for data visualization.
 
+### **6. AI-Powered Reporting**
+- **Gemini API Integration**:
+  - Generates intelligent reports summarizing scan results.
+  - Provides actionable insights and recommendations.
+
 ---
 
 ## 🤝 **Contributing**
@@ -218,6 +259,7 @@ For questions or issues, please open an issue on the [GitHub repository](https:/
 - **Nmap** for network scanning.
 - **Plotly** for data visualization.
 - **Docker** for containerization.
+- **Gemini API** for AI-powered reporting.
 
 ---
 
