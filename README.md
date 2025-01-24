@@ -1,4 +1,4 @@
-# 🛡️ Advanced AI-Powered Vulnerability Scanner
+# 🛡️ AD_VunlxAI (Advance Vulnerability AI )
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.14.0-orange)
@@ -7,7 +7,7 @@
 ![Docker](https://img.shields.io/badge/Docker-20.10.8-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-The **Advanced AI-Powered Vulnerability Scanner** is a cutting-edge cybersecurity tool designed to detect vulnerabilities, predict risks, and monitor network intrusions using **machine learning** and **advanced scanning techniques**. This tool is perfect for cybersecurity professionals, network administrators, and developers looking to secure their systems effectively.
+The **AD_VunlxAI** is a cutting-edge cybersecurity tool designed to detect vulnerabilities, predict risks, and monitor network intrusions using **machine learning** and **advanced scanning techniques**. This tool is perfect for cybersecurity professionals, network administrators, and developers looking to secure their systems effectively.
 
 ---
 
@@ -44,8 +44,8 @@ The **Advanced AI-Powered Vulnerability Scanner** is a cutting-edge cybersecurit
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/CYBERBULL123/AD_VunlxML.git
-   cd AD_VunlxML
+   git clone https://github.com/CYBERBULL123/AD_VunlxAI.git
+   cd AD_VunlxAI
    ```
 
 2. Install dependencies:
@@ -147,7 +147,7 @@ When using Docker, the `docker-compose.yml` file automatically loads the `.env` 
 ## 🗂️ **Project Structure**
 
 ```
-AD_VunlxML/
+AD_VunlxAI/
 │
 ├── app.py                       # Main Streamlit application
 ├── config.py                    # Configuration settings
