@@ -8,6 +8,9 @@ LEARNING_RATE = 0.001
 EPOCHS = 200
 PATIENCE = 10  # Early stopping patience
 
+# Model Saving
+MODEL_SAVE_PATH = "models/risk_prediction_model.pth"  # Path to save the trained model
+
 # Anomaly Detection
 CONTAMINATION = 0.1  # Proportion of outliers in the data
 

@@ -130,7 +130,7 @@ def main_app():
                 st.success("Model training completed!")
 
                 # Predict risk levels
-                risks = model(torch.tensor(numeric_data, dtype=torch.float32)).detach().numpy()
+                risks = predict_vulnerability(model, numeric_data)
                 df["Risk Score"] = risks.flatten()
 
                 # Display risk scores
@@ -144,7 +144,8 @@ def main_app():
 
                 # Anomaly detection
                 st.subheader("🔍 Anomaly Detection")
-                detector = AnomalyDetector()
+                true_labels = np.random.choice([1, -1], size=numeric_data.shape[0], p=[0.95, 0.05])
+                detector = AnomalyDetector(algorithm="isolation_forest", contamination=0.05)
                 anomalies = detector.detect_anomalies(numeric_data)
                 df["Anomaly"] = ["Yes" if a == -1 else "No" for a in anomalies]
 
@@ -152,8 +153,14 @@ def main_app():
                 st.write("Anomalies Detected:")
                 st.dataframe(df)
 
+                # Evaluate performance
+                metrics = detector.evaluate_anomalies(numeric_data, true_labels)
+                st.write("Metrics:", metrics)
+
                 # Visualize anomalies
                 st.subheader("📊 Anomaly Visualization")
+                fig = detector.plot_anomalies(numeric_data, feature_1=0, feature_2=1)
+                st.plotly_chart(fig)
                 st.plotly_chart(plot_anomaly_distribution(df))
                 st.plotly_chart(plot_scatter_anomalies(df, "Risk Score"))
                 st.plotly_chart(plot_heatmap(df, "Risk Score", "Anomaly"))
