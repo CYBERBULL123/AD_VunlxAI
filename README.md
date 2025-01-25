@@ -38,6 +38,45 @@ The **AD_VunlxAI** is a cutting-edge cybersecurity tool designed to detect vulne
 
 ---
 
+## ✨ **Features with Visuals**
+
+### 📂 **Data Analysis**
+Here are some screenshots of the **Data Analysis** feature in action:
+
+| **Data Cleaning** | **Anomaly Detection** | **Risk Prediction** |
+|-------------------|-----------------------|---------------------|
+| ![Data Cleaning](/imgs/dataAnalysis/1.png) | ![Anomaly Detection](/imgs/dataAnalysis/6.png) | ![Risk Prediction](/imgs/dataAnalysis/4.png) |
+
+| **Interactive Charts** | **Log Parsing** | **Data Preprocessing** |
+|------------------------|-----------------|------------------------|
+| ![Interactive Charts](/imgs/dataAnalysis/8.png) | ![Interactive chart 2](/imgs/dataAnalysis/5.png) | ![Data Preprocessing](/imgs/dataAnalysis/3.png) |
+
+---
+
+### 🌐 **Network Scanning**
+Here are some screenshots of the **Network Scanning** feature:
+
+| **Quick Scan** | **Service Detection** | **OS Detection** |
+|----------------|-----------------------|------------------|
+| ![Quick Scan](/imgs/nmapscan/1.png) | ![Service Detection](/imgs/nmapscan/2.png) | ![OS Detection](/imgs/nmapscan/3.png) |
+
+| **Vulnerability Prediction** | **Scan Results** | **Port Visualization** |
+|------------------------------|------------------|------------------------|
+| ![Vulnerability Prediction](/imgs/nmapscan/4.png) | ![Scan Results](/imgs/nmapscan/5.png) | ![Port Visualization](/imgs/nmapscan/6.png) |
+
+---
+
+### 📊 **AI-Powered Reporting**
+Here are some screenshots of the **AI-Powered Reporting** feature:
+
+| **Report Generation** | **Actionable Insights** | **Summary** |
+|-----------------------|-------------------------|-------------|
+| ![Report Generation](/imgs/report/1.png) | ![Actionable Insights](/imgs/report/2.png) | ![Summary](/imgs/report/3.png) |
+
+| **Detailed Analysis** |
+|-----------------------|
+| ![Detailed Analysis](/imgs/report/4.png) |
+
 ## 🚀 **Getting Started**
 
 ### **Installation**
