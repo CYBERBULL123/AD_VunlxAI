@@ -115,22 +115,25 @@ def main_app():
 
                 # Data Cleansing
                 st.subheader("🧹 Data Cleansing")
-                df = clean_data(df)
+                df = clean_data(df, drop_na=True, impute_missing=True, handle_outliers=True)
                 st.write("Cleansed Data:")
                 st.dataframe(df)
 
                 # Preprocess data
-                numeric_data = preprocess_data(df)
+                st.subheader("🔧 Data Preprocessing")
+                numeric_data = preprocess_data(df, encode_categorical=True)
+                st.write("Preprocessed Numeric Data (First 5 rows):")
+                st.write(numeric_data[:5])
 
                 # Train model and predict risk
                 st.subheader("🤖 Risk Prediction")
                 labels = np.random.randint(0, 2, size=(numeric_data.shape[0],))  # Mock labels
                 with st.spinner("Training the AI model..."):
-                    model = train_model(numeric_data, labels)
+                    model, scaler = train_model(numeric_data, labels)
                 st.success("Model training completed!")
 
                 # Predict risk levels
-                risks = predict_vulnerability(model, numeric_data)
+                risks = predict_vulnerability(model, numeric_data, scaler)
                 df["Risk Score"] = risks.flatten()
 
                 # Display risk scores
@@ -155,7 +158,8 @@ def main_app():
 
                 # Evaluate performance
                 metrics = detector.evaluate_anomalies(numeric_data, true_labels)
-                st.write("Metrics:", metrics)
+                st.write("Anomaly Detection Metrics:")
+                st.write(metrics)
 
                 # Visualize anomalies
                 st.subheader("📊 Anomaly Visualization")
@@ -263,6 +267,7 @@ def main_app():
 
                                 # Predict vulnerability likelihood
                                 st.subheader("🔮 Vulnerability Prediction")
+                                #vulnerability_scores = predict_vulnerability(model, port_df , scaler)
                                 vulnerability_scores = predict_vulnerability(port_df)
                                 port_df["Vulnerability Score"] = vulnerability_scores
 

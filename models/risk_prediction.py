@@ -1,16 +1,13 @@
-# models/risk_prediction.py
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
-from config import LEARNING_RATE, EPOCHS, PATIENCE , MODEL_SAVE_PATH
-import numpy as np
-import os
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from torch.optim.lr_scheduler import StepLR
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+import numpy as np
+import os
+from config import LEARNING_RATE, EPOCHS, PATIENCE , MODEL_SAVE_PATH
 
 class AdvancedRiskPredictionModel(nn.Module):
     def __init__(self, input_size):
@@ -47,24 +44,39 @@ def preprocess_data(data, labels=None):
     data = scaler.fit_transform(data)
     if labels is not None:
         X_train, X_val, y_train, y_val = train_test_split(data, labels, test_size=0.2, random_state=42)
-        return X_train, X_val, y_train, y_val
-    return data
+        return X_train, X_val, y_train, y_val, scaler
+    return data, scaler
 
-def predict_vulnerability(model, data):
-    """
-    Predict vulnerability likelihood using the trained model.
-    """
-    model.eval()
-    with torch.no_grad():
-        data = torch.tensor(data, dtype=torch.float32)
-        predictions = model(data)
-        return predictions.numpy()
+# def predict_vulnerability(model, data, scaler):
+#     """
+#     Predict vulnerability likelihood using the trained model.
+#     """
+#     model.eval()
+#     with torch.no_grad():
+#         data = scaler.transform(data)  # Ensure the data is scaled
+#         data = torch.tensor(data, dtype=torch.float32)
+#         predictions = model(data)
+#         return predictions.numpy()
 
-def predict_exploitation_likelihood(model, data):
+# def predict_exploitation_likelihood(model, data, scaler):
+#     """
+#     Predict exploitation likelihood using the trained model.
+#     """
+#     return predict_vulnerability(model, data, scaler)  # Reuse the same prediction logic
+
+def predict_vulnerability(data):
     """
-    Predict exploitation likelihood using the trained model.
+    Predict vulnerability likelihood using a Random Forest model.
     """
-    return predict_vulnerability(model, data)  # Reuse the same prediction logic
+    # Mock implementation (replace with actual trained model)
+    return np.random.rand(len(data))
+
+def predict_exploitation_likelihood(data):
+    """
+    Predict exploitation likelihood using a neural network.
+    """
+    # Mock implementation (replace with actual trained model)
+    return np.random.rand(len(data))
 
 def evaluate_model(model, X_val, y_val):
     """
@@ -89,7 +101,7 @@ def train_model(data, labels):
     Train the PyTorch model with early stopping and validation.
     """
     # Preprocess data
-    X_train, X_val, y_train, y_val = preprocess_data(data, labels)
+    X_train, X_val, y_train, y_val, scaler = preprocess_data(data, labels)
 
     input_size = X_train.shape[1]  # Dynamically set input size based on data
     model = AdvancedRiskPredictionModel(input_size)
@@ -136,7 +148,7 @@ def train_model(data, labels):
 
     # Load the best model
     model.load_state_dict(torch.load(MODEL_SAVE_PATH))
-    return model
+    return model, scaler
 
 def save_model(model, path):
     """
