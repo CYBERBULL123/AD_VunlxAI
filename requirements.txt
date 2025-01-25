@@ -2,7 +2,7 @@ streamlit
 pandas
 numpy
 scikit-learn
-torch
+torch==2.0.0+cpu --index-url https://download.pytorch.org/whl/cpu
 plotly
 python-nmap
 scapy
