@@ -2,7 +2,7 @@ streamlit
 pandas
 numpy
 scikit-learn
-torch==2.0.0+cpu
+torch==2.4.1
 plotly
 python-nmap
 scapy
