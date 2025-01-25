@@ -47,31 +47,33 @@ def preprocess_data(data, labels=None):
         return X_train, X_val, y_train, y_val, scaler
     return data, scaler
 
-# def predict_vulnerability(model, data, scaler):
-#     """
-#     Predict vulnerability likelihood using the trained model.
-#     """
-#     model.eval()
-#     with torch.no_grad():
-#         data = scaler.transform(data)  # Ensure the data is scaled
-#         data = torch.tensor(data, dtype=torch.float32)
-#         predictions = model(data)
-#         return predictions.numpy()
+def predict_vulnerability(model, data, scaler):
+    """
+    Predict vulnerability likelihood using the trained model.
+    """
+    model.eval()
+    with torch.no_grad():
+        data = scaler.transform(data)  # Ensure the data is scaled
+        data = torch.tensor(data, dtype=torch.float32)
+        predictions = model(data)
+        return predictions.numpy()
 
-# def predict_exploitation_likelihood(model, data, scaler):
-#     """
-#     Predict exploitation likelihood using the trained model.
-#     """
-#     return predict_vulnerability(model, data, scaler)  # Reuse the same prediction logic
+def predict_exploitation_likelihood(model, data, scaler):
+    """
+    Predict exploitation likelihood using the trained model.
+    """
+    return predict_vulnerability(model, data, scaler)  # Reuse the same prediction logic
 
-def predict_vulnerability(data):
+#============================= MOCK ====================================#
+
+def predict_vulnerability_mock(data):
     """
     Predict vulnerability likelihood using a Random Forest model.
     """
     # Mock implementation (replace with actual trained model)
     return np.random.rand(len(data))
 
-def predict_exploitation_likelihood(data):
+def predict_exploitation_likelihood_mock(data):
     """
     Predict exploitation likelihood using a neural network.
     """

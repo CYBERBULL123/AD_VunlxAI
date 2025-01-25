@@ -8,7 +8,7 @@ import logging
 from data_processing.data_cleaning import clean_data, preprocess_data
 from data_processing.log_parser import parse_log_file
 from models.anomaly_detection import AnomalyDetector
-from models.risk_prediction import train_model, predict_vulnerability, predict_exploitation_likelihood
+from models.risk_prediction import train_model, predict_vulnerability, predict_exploitation_likelihood , predict_vulnerability_mock , predict_exploitation_likelihood_mock
 from network_scanning.nmap_scanner import NmapScanner
 from visualization.plotly_charts import (
     plot_risk_scores,
@@ -268,7 +268,7 @@ def main_app():
                                 # Predict vulnerability likelihood
                                 st.subheader("🔮 Vulnerability Prediction")
                                 #vulnerability_scores = predict_vulnerability(model, port_df , scaler)
-                                vulnerability_scores = predict_vulnerability(port_df)
+                                vulnerability_scores = predict_vulnerability_mock(port_df)
                                 port_df["Vulnerability Score"] = vulnerability_scores
 
                                 st.dataframe(port_df)
@@ -282,7 +282,7 @@ def main_app():
 
                                 # Predict exploitation likelihood
                                 st.subheader("🔮 Exploitation Likelihood")
-                                exploitation_scores = predict_exploitation_likelihood(port_df)
+                                exploitation_scores = predict_exploitation_likelihood_mock(port_df)
                                 port_df["Exploitation Likelihood"] = exploitation_scores
 
                                 st.dataframe(port_df)
