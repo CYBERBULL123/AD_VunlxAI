@@ -36,10 +36,7 @@ def show_intro():
     - Predict risks and exploitation likelihood.
     - Generate detailed reports for remediation.
     """)
-
-    # Add an engaging image or GIF
-    st.image("https://via.placeholder.com/800x400.png?text=Cybersecurity+AI+Tool", use_column_width=True)
-
+    
     st.markdown("""
     ### Key Features:
     - **Data Analysis**: Upload and analyze datasets for anomalies and risks.
