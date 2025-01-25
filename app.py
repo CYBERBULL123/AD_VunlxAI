@@ -415,18 +415,62 @@ def main_app():
                     logging.error(f"Network scan error: {e}")
 
     with tab3:
-        st.header("🚨 Intrusion Detection System (IDS)")
+        st.title("🚨 IDS System")
+        # Initialize IDS
+        if "ids" not in st.session_state:
+            st.session_state.ids = IntrusionDetectionSystem()
+
+        # Initialize monitoring state
+        if "monitoring_active" not in st.session_state:
+            st.session_state.monitoring_active = False
+
+        def toggle_monitoring():
+            """
+            Toggle the monitoring state between start and stop.
+            """
+            st.session_state.monitoring_active = not st.session_state.monitoring_active
+
+        def monitor_traffic():
+            """
+            Simulate real-time monitoring of network traffic and display alerts.
+            """
+            alert_placeholder = st.empty()  # Placeholder to display alerts
+
+            while st.session_state.monitoring_active:
+                # Simulate traffic and detect intrusions
+                st.session_state.ids.simulate_traffic()
+                alerts = st.session_state.ids.detect_intrusions(st.session_state.ids.traffic_data)
+
+                # Display alerts in real-time
+                if not alerts.empty:
+                    alert_placeholder.dataframe(alerts)
+                else:
+                    alert_placeholder.write("No intrusions detected.")
+
+                # Simulate a delay for real-time monitoring
+                time.sleep(5)  # Adjust the delay as needed
+
+        # Display description
         st.write("""
-        **Intrusion Detection** monitors network traffic for:
+        **Intrusion Detection System (IDS)** monitors network traffic for:
         - Suspicious activity (e.g., port scans, brute force attacks).
         - Real-time alerts for potential intrusions.
+
+        **How to Use:**
+        - Click the button below to **Start Monitoring**.
+        - Click the same button again to **Stop Monitoring**.
         """)
 
-        ids = IntrusionDetectionSystem()
-        st.write("Monitoring network traffic for intrusions...")
-        alerts = ids.detect_intrusions()
-        st.subheader("🚨 Intrusion Alerts")
-        st.dataframe(alerts)
+        # Toggle button for monitoring
+        if st.session_state.monitoring_active:
+            if st.button("Stop Monitoring"):
+                toggle_monitoring()
+                st.write("Monitoring stopped.")
+        else:
+            if st.button("Start Monitoring"):
+                toggle_monitoring()
+                st.write("Monitoring started...")
+                monitor_traffic()
 
     with tab4:
         st.header("📄 Reports")
