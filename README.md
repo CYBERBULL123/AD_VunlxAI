@@ -5,7 +5,7 @@
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.0.0-red)
 ![Nmap](https://img.shields.io/badge/Nmap-7.90-green)
 ![Docker](https://img.shields.io/badge/Docker-20.10.8-blue)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+![License](https://img.shields.io/badge/License-GPL-yellow)
 
 The **AD_VunlxAI** is a cutting-edge cybersecurity tool designed to detect vulnerabilities, predict risks, and monitor network intrusions using **machine learning** and **advanced scanning techniques**. This tool is perfect for cybersecurity professionals, network administrators, and developers looking to secure their systems effectively.
 
@@ -111,10 +111,6 @@ services:
     stdin_open: true
     tty: true
 ```
-
----
-
-To ensure your app works with **Streamlit Secrets** (instead of `.env`), you need to update the environment variable handling in your code and documentation. Here's how to modify the **Environment Variables** section of your README to reflect the use of Streamlit Secrets:
 
 ---
 
