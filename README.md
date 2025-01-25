@@ -1,4 +1,4 @@
-# 🛡️ AD_VunlxAI (Advance Vulnerability AI )
+# 🛡️ AD_VunlxAI (Advanced Vulnerability AI)
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.14.0-orange)
@@ -114,40 +114,63 @@ services:
 
 ---
 
+To ensure your app works with **Streamlit Secrets** (instead of `.env`), you need to update the environment variable handling in your code and documentation. Here's how to modify the **Environment Variables** section of your README to reflect the use of Streamlit Secrets:
+
+---
+
 ## 🔑 **Environment Variables**
 
-To use the **Gemini API** for AI-powered report generation, you need to set up the `GEMINI_API_KEY` environment variable.
+To use the **Gemini API** for AI-powered report generation, you need to set up the `GEMINI_API_KEY` environment variable using **Streamlit Secrets**.
 
-### **1. Create a `.env` File**
-Create a `.env` file in the root of your project and add your Gemini API key:
+### **1. Add API Key to Streamlit Secrets**
+1. Go to the **Settings** tab in Streamlit Cloud.
+2. Scroll down to the **Secrets** section.
+3. Add your Gemini API key in the following format:
+   ```toml
+   [api_keys]
+   gemini = "your_gemini_api_key_here"
+   ```
 
-```plaintext
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-### **2. Load Environment Variables**
-The app uses `python-dotenv` to load the `.env` file. Ensure the following code is present in your `app.py`:
+### **2. Access the API Key in Your App**
+Update your code to access the API key from Streamlit Secrets. For example:
 
 ```python
-from dotenv import load_dotenv
-import os
+import streamlit as st
 
-# Load environment variables
-load_dotenv()
+# Access the Gemini API key from Streamlit Secrets
+gemini_api_key = st.secrets["api_keys"]["gemini"]
 
-# Access the Gemini API key
-gemini_api_key = os.getenv("GEMINI_API_KEY")
+if not gemini_api_key:
+    st.error("Gemini API key not found. Please add it to Streamlit Secrets.")
+else:
+    st.success("Gemini API key loaded successfully!")
 ```
 
-### **3. Using Docker with `.env`**
-When using Docker, the `docker-compose.yml` file automatically loads the `.env` file and passes the `GEMINI_API_KEY` to the container.
+### **3. Using Docker with Streamlit Secrets**
+When using Docker, ensure the `docker-compose.yml` file passes the `GEMINI_API_KEY` from Streamlit Secrets to the container:
+
+```yaml
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GEMINI_API_KEY=${GEMINI_API_KEY}  # Pass the Gemini API key
+    stdin_open: true
+    tty: true
+```
 
 ---
 
 ## 🗂️ **Project Structure**
 
 ```
-AD_VunlxML/
+AD_VunlxAI/
 │
 ├── app.py                       # Main Streamlit application
 ├── config.py                    # Configuration settings
@@ -155,7 +178,10 @@ AD_VunlxML/
 ├── packages.txt                 # System dependencies for Streamlit Cloud
 ├── Dockerfile                   # Docker configuration
 ├── docker-compose.yml           # Docker Compose configuration
-├── .env                         # Environment variables (e.g., Gemini API key)
+│
+├── .streamlit/                  # Streamlit configuration files
+│   ├── config.toml              # Streamlit app configuration
+│   └── secrets.toml             # Streamlit secrets (for local development)
 │
 ├── data_processing/             # Data preprocessing and parsing
 │   ├── __init__.py
@@ -248,7 +274,7 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 
 ## ❓ **Support**
 
-For questions or issues, please open an issue on the [GitHub repository](https://github.com/CYBERBULL123/AD_VunlxML/issues).
+For questions or issues, please open an issue on the [GitHub repository](https://github.com/CYBERBULL123/AD_VunlxAI/issues).
 
 ---
 
