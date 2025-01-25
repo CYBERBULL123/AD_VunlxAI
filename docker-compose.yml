@@ -1,13 +1,13 @@
-version: '3.8'
-
+]version: '3.8'
 services:
   app:
     build: .
     ports:
-      - "8501:8501"  # Map port 8501 on the host to port 8501 in the container
+      - "8501:8501"
     volumes:
-      - .:/app  # Mount the current directory to /app in the container
+      - .:/app
     environment:
       - PYTHONUNBUFFERED=1
-    stdin_open: true  # Required for Streamlit
-    tty: true         # Required for Streamlit
+      - GEMINI_API_KEY=${GEMINI_API_KEY}  # Pass the Gemini API key
+    stdin_open: true
+    tty: true
