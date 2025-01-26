@@ -155,10 +155,14 @@ services:
 
 ## 🔑 **Environment Variables**
 
-To use the **Gemini API** for AI-powered report generation, you need to set up the `GEMINI_API_KEY` environment variable using **Streamlit Secrets**.
+To use the **Gemini API** for AI-powered report generation, you need to set up the `GEMINI_API_KEY` environment variable. This can be done using **Streamlit Secrets** for both **local development** and **Streamlit Cloud deployment**.
 
-### **1. Add API Key to Streamlit Secrets**
-1. Go to the **Settings** tab in Streamlit Cloud.
+---
+
+### **1. Setting Up Streamlit Secrets**
+
+#### **For Streamlit Cloud Deployment**
+1. Go to the **Settings** tab in your Streamlit Cloud app.
 2. Scroll down to the **Secrets** section.
 3. Add your Gemini API key in the following format:
    ```toml
@@ -166,23 +170,19 @@ To use the **Gemini API** for AI-powered report generation, you need to set up t
    gemini = "your_gemini_api_key_here"
    ```
 
-### **2. Access the API Key in Your App**
-Update your code to access the API key from Streamlit Secrets. For example:
+#### **For Local Development**
+1. Create a `.streamlit/secrets.toml` file in your project root directory.
+2. Add your Gemini API key in the following format:
+   ```toml
+   [api_keys]
+   gemini = "your_gemini_api_key_here"
+   ```
 
-```python
-import streamlit as st
+---
 
-# Access the Gemini API key from Streamlit Secrets
-gemini_api_key = st.secrets["api_keys"]["gemini"]
+### **2. Using Docker with Streamlit Secrets**
 
-if not gemini_api_key:
-    st.error("Gemini API key not found. Please add it to Streamlit Secrets.")
-else:
-    st.success("Gemini API key loaded successfully!")
-```
-
-### **3. Using Docker with Streamlit Secrets**
-When using Docker, ensure the `docker-compose.yml` file passes the `GEMINI_API_KEY` from Streamlit Secrets to the container:
+When deploying your app using **Docker**, you can pass the `GEMINI_API_KEY` as an environment variable to the container. Update your `docker-compose.yml` file as follows:
 
 ```yaml
 version: '3.8'
@@ -213,70 +213,47 @@ AD_VunlxAI/
 ├── packages.txt                 # System dependencies for Streamlit Cloud
 ├── Dockerfile                   # Docker configuration
 ├── docker-compose.yml           # Docker Compose configuration
+├── LICENSE                      # License file
+├── README.md                    # Project documentation
+├── style.css                    # Custom CSS for Streamlit UI
 │
 ├── .streamlit/                  # Streamlit configuration files
 │   ├── config.toml              # Streamlit app configuration
 │   └── secrets.toml             # Streamlit secrets (for local development)
 │
-├── data_processing/             # Data preprocessing and parsing
-│   ├── __init__.py
-│   ├── data_cleaning.py         # Data cleaning functions
-│   ├── log_parser.py            # Log file parsing
+├── dataset/                     # Folder containing datasets
+│   ├── vulnerability_dataset.csv               # Sample dataset
+│   └── vulnerability_dataset_with_anomalies.csv # Dataset with anomalies
 │
-├── models/                      # Machine learning models
-│   ├── __init__.py
-│   ├── anomaly_detection.py     # Isolation Forest for anomaly detection
-│   ├── risk_prediction.py       # PyTorch model for risk prediction
+├── modules/                     # All Python modules
+│   ├── data_processing/         # Data preprocessing and parsing
+│   │   ├── data_cleaning.py     # Data cleaning functions
+│   │   └── log_parser.py        # Log file parsing
+│   │
+│   ├── models/                  # Machine learning models
+│   │   ├── anomaly_detection.py # Isolation Forest for anomaly detection
+│   │   └── risk_prediction.py   # PyTorch model for risk prediction
+│   │
+│   ├── network_scanning/        # Network scanning functionality
+│   │   └── nmap_scanner.py      # Nmap scanning logic
+│   │
+│   ├── visualization/           # Visualization functions
+│   │   └── plotly_charts.py     # Plotly-based visualizations
+│   │
+│   ├── ids/                     # Intrusion Detection System
+│   │   └── intrusion_detection.py # IDS logic
+│   │
+│   └── reporting/               # Reporting and threat intelligence
+│       ├── report_generator.py  # Generate AI-powered reports
+│       └── threat_intelligence.py # Threat intelligence integration
 │
-├── network_scanning/            # Network scanning functionality
-│   ├── __init__.py
-│   ├── nmap_scanner.py          # Nmap scanning logic
+├── images/                      # Folder containing all images
+│   ├── data_analysis/           # Data analysis screenshots
+│   ├── network_scanning/        # Network scanning screenshots
+│   └── reporting/               # Reporting screenshots
 │
-├── visualization/               # Visualization functions
-│   ├── __init__.py
-│   ├── plotly_charts.py         # Plotly-based visualizations
-│
-└── ids/                         # Intrusion Detection System
-    ├── __init__.py
-    ├── intrusion_detection.py   # IDS logic
+└── .dockerignore                # Files to ignore in Docker builds
 ```
-
----
-
-## 📚 **Documentation**
-
-### **1. Data Processing**
-- **Data Cleaning**:
-  - Removes missing values and duplicates.
-  - Handles outliers using standard deviation.
-- **Log Parsing**:
-  - Parses log files into a structured format (timestamp, level, message).
-
-### **2. Machine Learning Models**
-- **Anomaly Detection**:
-  - Uses Isolation Forest to detect anomalies in numeric data.
-- **Risk Prediction**:
-  - A PyTorch-based neural network predicts risk scores (0 to 1).
-
-### **3. Network Scanning**
-- **Nmap Integration**:
-  - Supports multiple scan types (Quick Scan, Full Scan, etc.).
-  - Visualizes open ports, services, and OS detection results.
-- **Vulnerability Prediction**:
-  - Predicts vulnerability likelihood based on Nmap scan results.
-
-### **4. Intrusion Detection System (IDS)**
-- **Rule-Based Detection**:
-  - Detects intrusions using predefined rules (e.g., port scans, SQL injection).
-
-### **5. Visualization**
-- **Interactive Charts**:
-  - Bar, pie, scatter, heatmap, and histogram charts for data visualization.
-
-### **6. AI-Powered Reporting**
-- **Gemini API Integration**:
-  - Generates intelligent reports summarizing scan results.
-  - Provides actionable insights and recommendations.
 
 ---
 
@@ -303,7 +280,7 @@ We welcome contributions! Please follow these steps:
 
 ## 📜 **License**
 
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the **GPL License**. See the [LICENSE](LICENSE) file for details.
 
 ---
 
