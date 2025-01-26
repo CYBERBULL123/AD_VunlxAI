@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import torch
+import os
 import time
 from pathlib import Path
 import logging
@@ -86,12 +87,25 @@ def main_app():
         - Visualize results with interactive charts.
         """)
 
-        # Upload dataset
-        uploaded_file = st.file_uploader("Upload CSV, Excel, JSON, or Log files", type=["csv", "xlsx", "json", "log", "txt"])
+        st.warning("Ensure your dataset contains numeric features and labels.")
 
+        # Dataset Selection
+        st.subheader("📁 Select a Dataset")
+        dataset_folder = "dataset"  # Folder containing your datasets
+        available_datasets = [f for f in os.listdir(dataset_folder) if f.endswith('.csv')]
+        selected_dataset = st.selectbox("Choose a dataset:", available_datasets)
+        uploaded_file = st.file_uploader("Upload a dataset (CSV, Excel, JSON, Log):", type=["csv", "xlsx", "json", "log", "txt"])
+
+        @st.cache_data
+        def load_dataset(file_path):
+            return pd.read_csv(file_path)
+
+        # Initialize dataset variable
+        df = None
+
+        # Handle dataset loading
         if uploaded_file:
             try:
-                # Load dataset based on file type
                 if uploaded_file.name.endswith('.csv'):
                     df = pd.read_csv(uploaded_file)
                 elif uploaded_file.name.endswith('.xlsx'):
@@ -101,34 +115,48 @@ def main_app():
                 elif uploaded_file.name.endswith('.log') or uploaded_file.name.endswith('.txt'):
                     log_content = uploaded_file.getvalue().decode("utf-8")
                     df = parse_log_file(log_content)
-                else:
-                    st.error("Unsupported file format.")
-                    return
+            except Exception as e:
+                st.error(f"Error loading uploaded dataset: {e}")
+        elif selected_dataset:
+            dataset_path = os.path.join(dataset_folder, selected_dataset)
+            df = load_dataset(dataset_path)
 
+        # Display raw data if available
+        if df is not None:
+            st.subheader("📄 Raw Data")
+            st.dataframe(df)
+
+        # Add a button to run the entire workflow
+        if st.button("Run Full Workflow"):
+            try:
                 # Validate dataset
                 validate_dataset(df)
 
                 # Display raw data
                 st.subheader("📄 Raw Data")
                 st.write("Here's a preview of your uploaded data:")
-                st.dataframe(df)
+                st.dataframe(df.head())
 
                 # Data Cleansing
                 st.subheader("🧹 Data Cleansing")
-                df = clean_data(df, drop_na=True, impute_missing=True, handle_outliers=True)
+                with st.spinner("Cleaning data..."):
+                    df = clean_data(df, drop_na=True, impute_missing=True, handle_outliers=True)
+                st.success("Data cleansing completed!")
                 st.write("Cleansed Data:")
-                st.dataframe(df)
+                st.dataframe(df.head())
 
                 # Preprocess data
                 st.subheader("🔧 Data Preprocessing")
-                numeric_data = preprocess_data(df, encode_categorical=True)
+                with st.spinner("Preprocessing data..."):
+                    numeric_data = preprocess_data(df, encode_categorical=True)
+                st.success("Data preprocessing completed!")
                 st.write("Preprocessed Numeric Data (First 5 rows):")
                 st.write(numeric_data[:5])
 
                 # Train model and predict risk
                 st.subheader("🤖 Risk Prediction")
-                labels = np.random.randint(0, 2, size=(numeric_data.shape[0],))  # Mock labels
                 with st.spinner("Training the AI model..."):
+                    labels = np.random.randint(0, 2, size=(numeric_data.shape[0],))  # Mock labels
                     model, scaler = train_model(numeric_data, labels)
                 st.success("Model training completed!")
 
@@ -138,36 +166,48 @@ def main_app():
 
                 # Display risk scores
                 st.write("Risk Scores:")
-                st.dataframe(df)
+                st.dataframe(df.head())
 
                 # Visualize risk scores
                 st.subheader("📊 Risk Score Visualization")
-                st.plotly_chart(plot_risk_scores(df))
-                st.plotly_chart(plot_histogram(df, "Risk Score", "Distribution of Risk Scores"))
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.plotly_chart(plot_risk_scores(df), use_container_width=True)
+                with col2:
+                    st.plotly_chart(plot_histogram(df, "Risk Score", "Distribution of Risk Scores"), use_container_width=True)
 
                 # Anomaly detection
                 st.subheader("🔍 Anomaly Detection")
-                true_labels = np.random.choice([1, -1], size=numeric_data.shape[0], p=[0.95, 0.05])
-                detector = AnomalyDetector(algorithm="isolation_forest", contamination=0.05)
-                anomalies = detector.detect_anomalies(numeric_data)
-                df["Anomaly"] = ["Yes" if a == -1 else "No" for a in anomalies]
+                with st.spinner("Detecting anomalies..."):
+                    true_labels = np.random.choice([1, -1], size=numeric_data.shape[0], p=[0.95, 0.05])
+                    detector = detector = AnomalyDetector(algorithm="isolation_forest", contamination=0.05)
+                    anomalies = detector.detect_anomalies(numeric_data)
+                    df["Anomaly"] = ["Yes" if a == -1 else "No" for a in anomalies]
+                st.success("Anomaly detection completed!")
 
                 # Display anomalies
                 st.write("Anomalies Detected:")
-                st.dataframe(df)
+                st.dataframe(df.head())
 
-                # Evaluate performance
+                 # Evaluate performance
                 metrics = detector.evaluate_anomalies(numeric_data, true_labels)
                 st.write("Anomaly Detection Metrics:")
                 st.write(metrics)
 
                 # Visualize anomalies
                 st.subheader("📊 Anomaly Visualization")
-                fig = detector.plot_anomalies(numeric_data, feature_1=0, feature_2=1)
-                st.plotly_chart(fig)
-                st.plotly_chart(plot_anomaly_distribution(df))
-                st.plotly_chart(plot_scatter_anomalies(df, "Risk Score"))
-                st.plotly_chart(plot_heatmap(df, "Risk Score", "Anomaly"))
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.plotly_chart(plot_anomaly_distribution(df), use_container_width=True)
+                with col2:
+                    st.plotly_chart(plot_scatter_anomalies(df, "Risk Score"), use_container_width=True)
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.plotly_chart(plot_heatmap(df, "Risk Score", "Anomaly"), use_container_width=True)
+                    with col2:
+                        fig = detector.plot_anomalies(numeric_data, feature_1=0, feature_2=1)
+                        st.plotly_chart(fig)
 
             except Exception as e:
                 st.error(f"An error occurred during data analysis: {e}")
