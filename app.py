@@ -47,7 +47,7 @@ def show_intro():
     """)
 
     # Login button to transition to the main app
-    if st.button("🚀 Login to Access the Tool"):
+    if st.button(" Click Me 🙂"):
         st.session_state.logged_in = True
         st.rerun()
 
@@ -549,7 +549,7 @@ def main_app():
             st.info("No reports available. Generate a report to view it here.")
 
 def main():
-    st.set_page_config(page_title="🛡️ Advanced AI-Powered Vulnerability Scanner", layout="wide")
+    st.set_page_config(page_title="🛡️ Ad_VulnxAI", layout="wide")
 
     # Load custom CSS
     def load_css(file_name):
