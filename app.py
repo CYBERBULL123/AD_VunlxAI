@@ -32,7 +32,7 @@ def show_intro():
     """
     st.title("🛡️ Advanced AI-Powered Vulnerability Scanner")
     st.markdown("""
-    Welcome to the **Advanced AI-Powered Vulnerability Scanner**! This tool combines cutting-edge AI and cybersecurity techniques to:
+    Welcome to the **Ad_VulnxAI**! This tool combines cutting-edge AI and cybersecurity techniques to:
     - Detect vulnerabilities in your network.
     - Predict risks and exploitation likelihood.
     - Generate detailed reports for remediation.
