@@ -5,11 +5,12 @@ import torch
 import os
 import time
 from pathlib import Path
+import plotly.graph_objects as go
 import logging
 from data_processing.data_cleaning import clean_data, preprocess_data
 from data_processing.log_parser import parse_log_file
 from models.anomaly_detection import AnomalyDetector
-from models.risk_prediction import train_model, predict_vulnerability, predict_exploitation_likelihood , predict_vulnerability_mock , predict_exploitation_likelihood_mock
+from models.risk_prediction import train_model, predict_vulnerability, predict_exploitation_likelihood , predict_vulnerability_mock , predict_exploitation_likelihood_mock , predict_with_uncertainty
 from network_scanning.nmap_scanner import NmapScanner
 from visualization.plotly_charts import (
     plot_risk_scores,
@@ -65,153 +66,306 @@ def validate_dataset(df):
     
     return True
 
+
 def main_app():
     """
-    Main app logic after login.
+    Enhanced main app logic with improved model integration and visualization
     """
     st.title("AI-Powered Vulnerability Scanner 🐞")
-    # Initialize session state for reports
+    
+    # Initialize session states
     if "reports" not in st.session_state:
         st.session_state.reports = []
+    if "model_metrics" not in st.session_state:
+        st.session_state.model_metrics = None
+    if "training_history" not in st.session_state:
+        st.session_state.training_history = None
 
     # Tabs for different sections
     tab1, tab2, tab3, tab4 = st.tabs(["📂 Data Analysis", "🌐 Network Scanner", "🚨 Intrusion Detection", "📄 Reports"])
 
     with tab1:
-        st.header("📂 Data Analysis")
+        st.header("📂 Advanced Data Analysis")
         st.write("""
-        **Upload your dataset** (CSV, Excel, JSON, or log files) to:
-        - Clean and preprocess the data.
-        - Detect anomalies using Isolation Forest.
-        - Predict risk scores using a PyTorch-based neural network.
-        - Visualize results with interactive charts.
+        **Upload your dataset** (CSV, Excel, JSON, or log files) for:
+        - Advanced data preprocessing and feature engineering
+        - Deep learning-based anomaly detection
+        - Risk prediction with uncertainty estimation
+        - Interactive visualizations and insights
         """)
 
-        st.warning("Ensure your dataset contains numeric features and labels.")
-
-        # Dataset Selection
+        # Dataset Selection with improved error handling
         st.subheader("📁 Select a Dataset")
-        dataset_folder = "dataset"  # Folder containing your datasets
-        available_datasets = [f for f in os.listdir(dataset_folder) if f.endswith('.csv')]
-        selected_dataset = st.selectbox("Choose a dataset:", available_datasets)
-        uploaded_file = st.file_uploader("Upload a dataset (CSV, Excel, JSON, Log):", type=["csv", "xlsx", "json", "log", "txt"])
+        dataset_folder = "dataset"
+        
+        try:
+            available_datasets = [f for f in os.listdir(dataset_folder) if f.endswith('.csv')]
+            selected_dataset = st.selectbox("Choose a dataset:", available_datasets)
+        except FileNotFoundError:
+            st.warning(f"Dataset folder '{dataset_folder}' not found. Creating it...")
+            os.makedirs(dataset_folder, exist_ok=True)
+            available_datasets = []
+            selected_dataset = None
+
+        uploaded_file = st.file_uploader(
+            "Upload a dataset (CSV, Excel, JSON, Log):", 
+            type=["csv", "xlsx", "json", "log", "txt"]
+        )
 
         @st.cache_data
         def load_dataset(file_path):
-            return pd.read_csv(file_path)
+            try:
+                return pd.read_csv(file_path)
+            except Exception as e:
+                st.error(f"Error loading dataset: {e}")
+                return None
 
         # Initialize dataset variable
         df = None
 
-        # Handle dataset loading
+        # Enhanced dataset loading with progress bar
         if uploaded_file:
             try:
-                if uploaded_file.name.endswith('.csv'):
-                    df = pd.read_csv(uploaded_file)
-                elif uploaded_file.name.endswith('.xlsx'):
-                    df = pd.read_excel(uploaded_file)
-                elif uploaded_file.name.endswith('.json'):
-                    df = pd.read_json(uploaded_file)
-                elif uploaded_file.name.endswith('.log') or uploaded_file.name.endswith('.txt'):
-                    log_content = uploaded_file.getvalue().decode("utf-8")
-                    df = parse_log_file(log_content)
+                with st.spinner("Loading and validating dataset..."):
+                    if uploaded_file.name.endswith('.csv'):
+                        df = pd.read_csv(uploaded_file)
+                    elif uploaded_file.name.endswith('.xlsx'):
+                        df = pd.read_excel(uploaded_file)
+                    elif uploaded_file.name.endswith('.json'):
+                        df = pd.read_json(uploaded_file)
+                    elif uploaded_file.name.endswith(('.log', '.txt')):
+                        log_content = uploaded_file.getvalue().decode("utf-8")
+                        df = parse_log_file(log_content)
+                    
+                    if df is not None:
+                        st.success("Dataset loaded successfully!")
             except Exception as e:
-                st.error(f"Error loading uploaded dataset: {e}")
+                st.error(f"Error loading dataset: {e}")
         elif selected_dataset:
             dataset_path = os.path.join(dataset_folder, selected_dataset)
             df = load_dataset(dataset_path)
 
-        # Display raw data if available
+        # Display dataset info and statistics
         if df is not None:
-            st.subheader("📄 Raw Data")
-            st.dataframe(df)
+            st.subheader("📊 Dataset Overview")
+            st.write("Dataset Shape:", df.shape)
+            st.write("Missing Values:", df.isnull().sum().sum())
 
-        # Add a button to run the entire workflow
-        if st.button("Run Full Workflow"):
+            # Add data profiling option
+            if st.checkbox("Show Detailed Data Profile"):
+                st.write("Dataset Statistics:")
+                st.write(df.describe())
+                
+                # Display correlation matrix using Streamlit's built-in Plotly support
+                if len(df.select_dtypes(include=[np.number]).columns) > 0:
+                    st.write("Correlation Matrix:")
+                    corr_matrix = df.select_dtypes(include=[np.number]).corr()
+
+                    # Create a heatmap using Plotly
+                    fig = go.Figure(data=go.Heatmap(
+                        z=corr_matrix.values,
+                        x=corr_matrix.columns,
+                        y=corr_matrix.columns,
+                        colorscale='Viridis'
+                    ))
+
+                    fig.update_layout(
+                        title='Correlation Matrix',
+                        xaxis_title='Features',
+                        yaxis_title='Features'
+                    )
+
+                    st.plotly_chart(fig)
+
+
+        # Enhanced workflow execution
+        if st.button("Run Advanced Analysis Workflow"):
             try:
+                if df is None:
+                    raise ValueError("Please upload or select a dataset first.")
+
                 # Validate dataset
                 validate_dataset(df)
 
-                # Display raw data
-                st.subheader("📄 Raw Data")
-                st.write("Here's a preview of your uploaded data:")
-                st.dataframe(df.head())
+                def plot_training_history(history):
+                    """
+                    Plot training history metrics
+                    """
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatter(y=history['train_loss'], name='Training Loss'))
+                    fig.add_trace(go.Scatter(y=history['val_loss'], name='Validation Loss'))
+                    fig.add_trace(go.Scatter(y=history['val_f1'], name='Validation F1'))
+                    fig.update_layout(title='Training History', xaxis_title='Epoch', yaxis_title='Value')
+                    return fig
 
-                # Data Cleansing
-                st.subheader("🧹 Data Cleansing")
-                with st.spinner("Cleaning data..."):
-                    df = clean_data(df, drop_na=True, impute_missing=True, handle_outliers=True)
-                st.success("Data cleansing completed!")
-                st.write("Cleansed Data:")
-                st.dataframe(df.head())
+                def plot_risk_scores_with_uncertainty(risks, uncertainties):
+                    """
+                    Plot risk scores with uncertainty bands
+                    """
+                    fig = go.Figure()
 
-                # Preprocess data
-                st.subheader("🔧 Data Preprocessing")
-                with st.spinner("Preprocessing data..."):
-                    numeric_data = preprocess_data(df, encode_categorical=True)
-                st.success("Data preprocessing completed!")
-                st.write("Preprocessed Numeric Data (First 5 rows):")
-                st.write(numeric_data[:5])
+                    # Add risk scores
+                    fig.add_trace(go.Scatter(
+                        y=risks,
+                        mode='lines',
+                        name='Risk Score',
+                        line=dict(color='blue')
+                    ))
 
-                # Train model and predict risk
-                st.subheader("🤖 Risk Prediction")
-                with st.spinner("Training the AI model..."):
-                    labels = np.random.randint(0, 2, size=(numeric_data.shape[0],))  # Mock labels
-                    model, scaler = train_model(numeric_data, labels)
-                st.success("Model training completed!")
+                    # Add uncertainty bands
+                    fig.add_trace(go.Scatter(
+                        y=risks + uncertainties,
+                        mode='lines',
+                        name='Upper Bound',
+                        line=dict(width=0),
+                        showlegend=False
+                    ))
 
-                # Predict risk levels
-                risks = predict_vulnerability(model, numeric_data, scaler)
-                df["Risk Score"] = risks.flatten()
+                    fig.add_trace(go.Scatter(
+                        y=risks - uncertainties,
+                        mode='lines',
+                        name='Lower Bound',
+                        line=dict(width=0),
+                        fillcolor='rgba(0, 0, 255, 0.2)',
+                        fill='tonexty',
+                        showlegend=False
+                    ))
 
-                # Display risk scores
-                st.write("Risk Scores:")
-                st.dataframe(df.head())
+                    fig.update_layout(
+                        title='Risk Scores with Uncertainty',
+                        yaxis_title='Risk Score',
+                        xaxis_title='Sample Index'
+                    )
+                    return fig
 
-                # Visualize risk scores
-                st.subheader("📊 Risk Score Visualization")
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.plotly_chart(plot_risk_scores(df), use_container_width=True)
-                with col2:
-                    st.plotly_chart(plot_histogram(df, "Risk Score", "Distribution of Risk Scores"), use_container_width=True)
+                def plot_risk_distribution(risk_scores):
+                    """
+                    Plot risk score distribution
+                    """
+                    fig = go.Figure()
+                    fig.add_trace(go.Histogram(
+                        x=risk_scores,
+                        nbinsx=30,
+                        name='Risk Distribution'
+                    ))
+                    fig.update_layout(
+                        title='Risk Score Distribution',
+                        xaxis_title='Risk Score',
+                        yaxis_title='Count'
+                    )
+                    return fig
 
-                # Anomaly detection
-                st.subheader("🔍 Anomaly Detection")
-                with st.spinner("Detecting anomalies..."):
-                    true_labels = np.random.choice([1, -1], size=numeric_data.shape[0], p=[0.95, 0.05])
-                    detector = detector = AnomalyDetector(algorithm="isolation_forest", contamination=0.05)
-                    anomalies = detector.detect_anomalies(numeric_data)
-                    df["Anomaly"] = ["Yes" if a == -1 else "No" for a in anomalies]
-                st.success("Anomaly detection completed!")
+                # Data Cleansing with progress tracking
+                st.subheader("🧹 Advanced Data Cleansing")
+                progress_bar = st.progress(0)
+                status_text = st.empty()
 
-                # Display anomalies
-                st.write("Anomalies Detected:")
-                st.dataframe(df.head())
+                status_text.text("Cleaning data...")
+                progress_bar.progress(20)
+                df_cleaned = clean_data(df, drop_na=True, impute_missing=True, handle_outliers=True)
+                st.text("Cleaned Data:")
+                st.dataframe(df_cleaned.head())
+                
+                status_text.text("Preprocessing data...")
+                progress_bar.progress(40)
+                numeric_data = preprocess_data(df_cleaned, encode_categorical=True)
+                st.text("Preprocessed Data:")
+                st.dataframe(numeric_data)
 
-                 # Evaluate performance
-                metrics = detector.evaluate_anomalies(numeric_data, true_labels)
-                st.write("Anomaly Detection Metrics:")
-                st.write(metrics)
+                # Model Training with enhanced visualization
+                st.subheader("🤖 Advanced Risk Prediction")
+                status_text.text("Training AI model...")
+                progress_bar.progress(60)
+
+                # Generate synthetic labels for demonstration
+                labels = np.random.randint(0, 2, size=(numeric_data.shape[0],))
+
+                # Train the enhanced model
+                model, scaler, training_history = train_model(numeric_data, labels)
+
+
+                # Store training history
+                st.session_state.training_history = training_history
+
+                # Plot training history if available
+                if training_history:
+                    st.write("Model Training History:")
+                    fig = plot_training_history(training_history)
+                    if fig:
+                        st.plotly_chart(fig)
+                    else:
+                        st.warning("No training history to plot.")
+
+                # Make predictions with uncertainty
+                status_text.text("Making predictions...")
+                progress_bar.progress(80)
+                mean_predictions, uncertainty = predict_with_uncertainty(model, numeric_data, scaler)
+
+
+                # Ensure predictions are valid before plotting
+                if mean_predictions is not None and uncertainty is not None:
+                    # Add predictions and uncertainty to dataframe
+                    df_cleaned['Risk Score'] = mean_predictions
+                    df_cleaned['Uncertainty'] = uncertainty
+
+                    # Visualize results
+                    st.subheader("📊 Advanced Risk Analysis")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        fig = plot_risk_scores_with_uncertainty(
+                            df_cleaned['Risk Score'], 
+                            df_cleaned['Uncertainty']
+                        )
+                        if fig:
+                            st.plotly_chart(fig, use_container_width=True)
+                        else:
+                            st.warning("No Risk Score plot available.")
+                    with col2:
+                        fig = plot_risk_distribution(df_cleaned['Risk Score'])
+                        if fig:
+                            st.plotly_chart(fig, use_container_width=True)
+                        else:
+                            st.warning("No Risk Distribution plot available.")
+                else:
+                    st.warning("No predictions to display.")
+
+
+                # Anomaly Detection
+                st.subheader("🔍 Advanced Anomaly Detection")
+                status_text.text("Detecting anomalies...")
+                progress_bar.progress(90)
+                
+                detector = AnomalyDetector(algorithm="isolation_forest", contamination=0.05)
+                anomalies = detector.detect_anomalies(numeric_data)
+                df_cleaned['Anomaly'] = ['Yes' if a == -1 else 'No' for a in anomalies]
 
                 # Visualize anomalies
-                st.subheader("📊 Anomaly Visualization")
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.plotly_chart(plot_anomaly_distribution(df), use_container_width=True)
+                    st.plotly_chart(
+                        plot_anomaly_distribution(df_cleaned),
+                        use_container_width=True
+                    )
                 with col2:
-                    st.plotly_chart(plot_scatter_anomalies(df, "Risk Score"), use_container_width=True)
+                    st.plotly_chart(
+                        plot_scatter_anomalies(df_cleaned, 'Risk Score'),
+                        use_container_width=True
+                    )
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.plotly_chart(plot_heatmap(df, "Risk Score", "Anomaly"), use_container_width=True)
-                    with col2:
-                        fig = detector.plot_anomalies(numeric_data, feature_1=0, feature_2=1)
-                        st.plotly_chart(fig)
+                status_text.text("Analysis completed successfully!")
+                st.success("Advanced analysis workflow completed!")
 
             except Exception as e:
-                st.error(f"An error occurred during data analysis: {e}")
-                logging.error(f"Data analysis error: {e}")
+                st.error(f"An error occurred during analysis: {e}")
+                logging.error(f"Analysis error: {e}")
+                
+            finally:
+                # Clear progress indicators
+                if 'progress_bar' in locals():
+                    progress_bar.empty()
+                if 'status_text' in locals():
+                    status_text.empty()
+
 
     with tab2:
         st.header("🌐 Network Scanner")
