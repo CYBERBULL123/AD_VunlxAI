@@ -857,8 +857,7 @@ def main_app():
             st.subheader("Saved Reports")
             for i, report in enumerate(st.session_state.reports):
                 with st.expander(f"Report {i + 1}"):
-                    st.markdown(report)  # Display report in Markdown format for better readability
-                    # Provide a download button for the report as a .txt file
+                    st.markdown(report)  # Display in Markdown format
                     st.download_button(
                         label="Download Report as TXT",
                         data=report,

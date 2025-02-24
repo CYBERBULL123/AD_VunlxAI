@@ -6,39 +6,34 @@ import logging
 from functools import lru_cache
 import streamlit as st
 
-### Step 1: Configure API Keys
-# Load API keys from Streamlit secrets
+# Configure API Keys from Streamlit secrets
 gemini_key = st.secrets["api_keys"]["gemini"]
-nvd_api_key = st.secrets["api_keys"]["nvd"]  # Optional for NVD (not currently required)
+nvd_api_key = st.secrets["api_keys"]["nvd"]  # Optional for NVD
 virustotal_api_key = st.secrets["api_keys"]["virustotal"]
 
-### Step 2: Initialize the LLM
+# Initialize the LLM
 llm = ChatGoogleGenerativeAI(
     model="gemini-1.5-flash-latest",
     api_key=gemini_key,
     temperature=0.7,
-    max_tokens=3000,  # Supports detailed responses
+    max_tokens=3000,
 )
 
-### Step 3: Set Up Logging
+# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-### Step 4: Define the Enhanced ThreatIntelligenceTool
+# Define the Threat Intelligence Tool
 class ThreatIntelligenceTool(BaseTool):
     name: str = "Threat Intelligence Lookup"
     description: str = "Look up advanced threat intelligence for a vulnerability or CVE ID using NVD and VirusTotal."
 
     def _run(self, vulnerability_input: str) -> str:
-        """
-        Fetch detailed threat intelligence using NVD and VirusTotal APIs.
-        """
         try:
             # Determine if input is a CVE ID or a vulnerability name
             if vulnerability_input.upper().startswith("CVE-"):
                 cve_id = vulnerability_input.upper()
             else:
-                # Search NVD for a matching CVE ID
                 search_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch={vulnerability_input}"
                 response = requests.get(search_url)
                 if response.status_code == 200:
@@ -50,7 +45,7 @@ class ThreatIntelligenceTool(BaseTool):
                 else:
                     return f"Final Answer: Error searching NVD: {response.status_code}."
 
-            # Fetch vulnerability details from NVD
+            # Fetch NVD details
             detail_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cveId={cve_id}"
             response = requests.get(detail_url)
             if response.status_code == 200:
@@ -65,7 +60,7 @@ class ThreatIntelligenceTool(BaseTool):
             else:
                 return f"Final Answer: Error fetching CVE details from NVD: {response.status_code}."
 
-            # Search VirusTotal for related threats
+            # Fetch VirusTotal insights
             vt_search_url = f"https://www.virustotal.com/api/v3/search?query={cve_id}"
             headers = {"X-Api-Key": virustotal_api_key}
             response = requests.get(vt_search_url, headers=headers)
@@ -83,7 +78,6 @@ class ThreatIntelligenceTool(BaseTool):
             else:
                 vt_info = f"Error searching VirusTotal: {response.status_code}."
 
-            # Compile the advanced threat intelligence report
             report = (
                 f"Vulnerability: {cve_id}\n"
                 f"Description: {description}\n"
@@ -95,22 +89,19 @@ class ThreatIntelligenceTool(BaseTool):
             logger.error(f"Error in ThreatIntelligenceTool: {e}")
             return f"Final Answer: Unable to retrieve threat intelligence for '{vulnerability_input}' due to an error."
 
-### Step 5: Initialize the Agent
+# Initialize the Agent
 tools = [ThreatIntelligenceTool()]
 agent = initialize_agent(
     tools,
     llm,
     agent="zero-shot-react-description",
     verbose=True,
-    max_iterations=1  # Prevents excessive looping
+    max_iterations=1
 )
 
-### Step 6: Cache Results for Efficiency
+# Cached Threat Intelligence Function
 @lru_cache(maxsize=100)
 def get_threat_intelligence(vulnerability_input: str) -> str:
-    """
-    Fetch cached or fresh threat intelligence using the agent.
-    """
     try:
         logger.info(f"Fetching threat intelligence for: {vulnerability_input}")
         result = agent.run(f"Look up threat intelligence for {vulnerability_input}.")
