@@ -293,7 +293,7 @@ def main_app():
                 progress_bar.progress(40)
                 numeric_data = preprocess_data(df_cleaned, encode_categorical=True)
                 st.text("Preprocessed Data:")
-                st.dataframe(numeric_data)
+                
 
                 # Model Training with enhanced visualization
                 st.subheader("🤖 Advanced Risk Prediction")
