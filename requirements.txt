@@ -5,6 +5,7 @@ scikit-learn
 torch==2.4.1
 plotly
 seaborn
+tabulate
 python-nmap
 scapy
 langchain
