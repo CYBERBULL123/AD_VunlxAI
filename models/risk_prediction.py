@@ -147,8 +147,8 @@ def train_model(data, labels):
     # Convert data to tensors
     X_train = torch.tensor(X_train, dtype=torch.float32)
     y_train = torch.tensor(y_train, dtype=torch.float32).view(-1, 1)
-    X_val = torch.tensor(X_val, dtype=torch.float32)
-    y_val = torch.tensor(y_val, dtype=torch.float32).view(-1, 1)
+    X_val_tensor = torch.tensor(X_val, dtype=torch.float32)
+    y_val_tensor = torch.tensor(y_val, dtype=torch.float32).view(-1, 1)
 
     best_val_f1 = 0.0
     patience_counter = 0
@@ -179,12 +179,12 @@ def train_model(data, labels):
         # Validation phase
         model.eval()
         with torch.no_grad():
-            val_outputs = model(X_val)
-            val_loss = criterion(val_outputs, y_val)
+            val_outputs = model(X_val_tensor)
+            val_loss = criterion(val_outputs, y_val_tensor)
             
             # Calculate F1 score
             val_preds = (val_outputs > 0.5).float()
-            val_f1 = f1_score(y_val.numpy(), val_preds.numpy())
+            val_f1 = f1_score(y_val_tensor.numpy(), val_preds.numpy())
             
             # Store metrics
             training_history['train_loss'].append(loss.item())
@@ -218,7 +218,9 @@ def train_model(data, labels):
     # Load best model
     checkpoint = torch.load(MODEL_SAVE_PATH)
     model.load_state_dict(checkpoint['model_state_dict'])
-    return model, scaler, training_history
+    
+    # Return validation data as numpy arrays
+    return model, scaler, training_history, X_val, y_val
 
 
 def predict_with_uncertainty(model, data, scaler, num_samples=10):

@@ -10,7 +10,7 @@ import logging
 from data_processing.data_cleaning import clean_data, preprocess_data
 from data_processing.log_parser import parse_log_file
 from models.anomaly_detection import AnomalyDetector
-from models.risk_prediction import train_model, predict_vulnerability, predict_exploitation_likelihood , predict_vulnerability_mock , predict_exploitation_likelihood_mock , predict_with_uncertainty
+from models.risk_prediction import train_model, predict_vulnerability, predict_exploitation_likelihood , predict_vulnerability_mock , predict_exploitation_likelihood_mock , predict_with_uncertainty , evaluate_model_comprehensive
 from network_scanning.nmap_scanner import NmapScanner
 from visualization.plotly_charts import (
     plot_risk_scores,
@@ -80,6 +80,29 @@ def main_app():
         st.session_state.model_metrics = None
     if "training_history" not in st.session_state:
         st.session_state.training_history = None
+    if "scan_data" not in st.session_state:  # New storage for all scan data
+        st.session_state.scan_data = {}
+
+    def calculate_overall_risk(scan_data):
+        """Calculate comprehensive risk score across all scans"""
+        risk_score = 0
+        max_score = 0
+        
+        for scan_type, results in scan_data.items():
+            if 'vulnerability_scores' in results:
+                risk_score += results['vulnerability_scores'].mean()
+                max_score += 1
+            if 'risk_scores' in results:
+                risk_score += results['risk_scores'].mean()
+                max_score += 1
+                
+        final_score = (risk_score / max_score) if max_score > 0 else 0
+        
+        return f"""
+        - **Overall Risk Score**: {final_score:.2f}/1.00
+        - **Risk Level**: {'Critical' if final_score > 0.8 else 'High' if final_score > 0.6 else 'Medium' if final_score > 0.4 else 'Low'}
+        - **Affected Systems**: {len(scan_data)} different scan targets
+        """
 
     # Tabs for different sections
     tab1, tab2, tab3, tab4 = st.tabs(["📂 Data Analysis", "🌐 Network Scanner", "🚨 Intrusion Detection", "📄 Reports"])
@@ -281,11 +304,128 @@ def main_app():
                 labels = np.random.randint(0, 2, size=(numeric_data.shape[0],))
 
                 # Train the enhanced model
-                model, scaler, training_history = train_model(numeric_data, labels)
-
+                model, scaler, training_history, X_val, y_val = train_model(numeric_data, labels)
 
                 # Store training history
                 st.session_state.training_history = training_history
+
+                # Add this after the training history visualization in the Streamlit app
+                # ===================== Model Evaluation Section =====================
+                st.subheader("📈 Model Performance Evaluation")
+
+                # Create tabs for different types of evaluation
+                eval_tab1, eval_tab2 = st.tabs(["Training History", "Comprehensive Metrics"])
+
+                with eval_tab1:
+                    if st.session_state.training_history:
+                        st.write("### Model Training Progress")
+                        
+                        # Create a Plotly figure for training history
+                        fig = go.Figure()
+                        fig.add_trace(go.Scatter(
+                            y=st.session_state.training_history['train_loss'],
+                            name='Training Loss',
+                            mode='lines+markers',
+                            line=dict(color='#FF4B4B')
+                        ))
+                        fig.add_trace(go.Scatter(
+                            y=st.session_state.training_history['val_loss'],
+                            name='Validation Loss',
+                            mode='lines+markers',
+                            line=dict(color='#0068C9')
+                        ))
+                        fig.add_trace(go.Scatter(
+                            y=st.session_state.training_history['val_f1'],
+                            name='Validation F1 Score',
+                            mode='lines+markers',
+                            line=dict(color='#00C897'),
+                            yaxis='y2'
+                        ))
+                        
+                        fig.update_layout(
+                            title='Training Metrics History',
+                            xaxis_title='Epochs',
+                            yaxis_title='Loss Value',
+                            yaxis2=dict(
+                                title='F1 Score',
+                                overlaying='y',
+                                side='right',
+                                rangemode='tozero'
+                            ),
+                            hovermode="x unified",
+                            template='plotly_white'
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.warning("No training history available for visualization")
+
+                with eval_tab2:
+                        # Perform comprehensive evaluation
+                        metrics = evaluate_model_comprehensive(model, X_val, y_val, scaler)  # Remove .numpy()
+                        
+                        # Create a metrics dataframe for better visualization
+                        metrics_df = pd.DataFrame({
+                            'Metric': ['Accuracy', 'Precision', 'Recall', 'F1 Score', 'ROC AUC', 'PR AUC'],
+                            'Value': [
+                                metrics['accuracy'],
+                                metrics['precision'],
+                                metrics['recall'],
+                                metrics['f1_score'],
+                                metrics['roc_auc'],
+                                metrics['pr_auc']
+                            ]
+                        })
+
+                        # Display metrics in columns with color coding
+                        st.write("### Comprehensive Performance Metrics")
+                        
+                        cols = st.columns(3)
+                        metric_styles = {
+                            'Accuracy': ('#00C897', '🟢'),
+                            'Precision': ('#0068C9', '🔵'),
+                            'Recall': ('#FF4B4B', '🔴'),
+                            'F1 Score': ('#FFC700', '🟡'),
+                            'ROC AUC': ('#7D3C98', '🟣'),
+                            'PR AUC': ('#FF6B6B', '❤️')
+                        }
+
+                        for idx, row in metrics_df.iterrows():
+                            with cols[idx % 3]:
+                                color, icon = metric_styles[row['Metric']]
+                                st.markdown(f"""
+                                <div style="
+                                    padding: 1rem;
+                                    border-radius: 0.5rem;
+                                    background: {color}10;
+                                    border-left: 4px solid {color};
+                                    margin-bottom: 1rem;
+                                ">
+                                    <div style="font-size: 0.8rem; color: {color}; margin-bottom: 0.5rem;">
+                                        {icon} {row['Metric']}
+                                    </div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: {color};">
+                                        {row['Value']:.3f}
+                                    </div>
+                                </div>
+                                """, unsafe_allow_html=True)
+
+                        # Add confusion matrix visualization
+                        st.write("### Confusion Matrix")
+                        from sklearn.metrics import confusion_matrix
+                        import seaborn as sns
+                        import matplotlib.pyplot as plt
+
+                        y_pred = model(torch.tensor(scaler.transform(X_val), dtype=torch.float32))
+                        y_pred = (y_pred > 0.5).float().numpy()
+                        cm = confusion_matrix(y_val, y_pred)
+
+                        fig, ax = plt.subplots(figsize=(6, 4))
+                        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                                    xticklabels=['Low Risk', 'High Risk'],
+                                    yticklabels=['Low Risk', 'High Risk'])
+                        plt.ylabel('Actual')
+                        plt.xlabel('Predicted')
+                        st.pyplot(fig)
 
                 # Plot training history if available
                 if training_history:
@@ -384,25 +524,13 @@ def main_app():
             help="Choose the type of scan to perform on the target IP."
         )
 
-        # Custom ports input for TCP SYN Scan
+         # Custom ports input for TCP SYN Scan
         if scan_type == "TCP SYN Scan":
-            # Define important ports with their names
             important_ports = {
-                21: "FTP",
-                22: "SSH",
-                23: "Telnet",
-                25: "SMTP",
-                53: "DNS",
-                80: "HTTP",
-                110: "POP3",
-                143: "IMAP",
-                443: "HTTPS",
-                3306: "MySQL",
-                3389: "RDP",
-                8080: "HTTP-Alt"
+                21: "FTP", 22: "SSH", 23: "Telnet", 25: "SMTP", 53: "DNS",
+                80: "HTTP", 110: "POP3", 143: "IMAP", 443: "HTTPS",
+                3306: "MySQL", 3389: "RDP", 8080: "HTTP-Alt"
             }
-
-            # Multi-select box for ports
             selected_ports = st.multiselect(
                 "Select Ports to Scan",
                 options=list(important_ports.keys()),
@@ -411,6 +539,7 @@ def main_app():
             )
 
         if st.button("Start Network Scan"):
+            st.session_state.scan_data[scan_type] = {}
             st.info(f"Starting {scan_type} on {target_ip}...")
             scanner = NmapScanner()
             with st.spinner("Scanning the network..."):
@@ -508,6 +637,15 @@ def main_app():
                             else:
                                 st.write("No OS information detected.")
 
+                            # Save results
+                            st.session_state.scan_data[scan_type] = {
+                                'nmap_result': nmap_result,
+                                'port_df': port_df,
+                                'os_df': os_df,
+                                'vulnerability_scores': vulnerability_scores,
+                                'exploitation_scores': exploitation_scores
+                            }
+
                         else:
                             st.error("No scan results found for the target IP.")
 
@@ -526,6 +664,11 @@ def main_app():
                             st.plotly_chart(plot_bar_chart(live_hosts_df, "IP", "MAC", "Live Hosts Distribution"))
                         else:
                             st.error("Column 'IP' not found in the DataFrame.")
+                        # Save results
+                        st.session_state.scan_data[scan_type] = {
+                            'live_hosts_df': live_hosts_df,
+                            'risk_scores': predict_exploitation_likelihood_mock(live_hosts_df)
+                    }
 
                     elif scan_type == "TCP SYN Scan":
                         if not selected_ports:
@@ -584,6 +727,11 @@ def main_app():
                                         st.write(f"**Description:** {row['Description']}")
                             else:
                                 st.error("Column 'Port' not found in the DataFrame.")
+                            # Save results
+                            st.session_state.scan_data[scan_type] = {
+                                'vuln_df': vuln_df,
+                                'risk_scores': predict_exploitation_likelihood_mock(vuln_df)
+                    }
                         else:
                             st.write("No vulnerabilities detected.")
 
@@ -613,6 +761,12 @@ def main_app():
                                         st.write(f"**CPE:** {row['CPE']}")
                             else:
                                 st.error("Column 'Port' not found in the DataFrame.")
+
+                            # Save results
+                            st.session_state.scan_data[scan_type] = {
+                                'service_df': service_df,
+                                'risk_scores': predict_exploitation_likelihood_mock(service_df)
+                            }
                         else:
                             st.write("No services detected.")
 
@@ -682,23 +836,35 @@ def main_app():
         st.header("📄 Reports")
         st.write("""
         **View and manage generated vulnerability reports.**
+        Reports can be generated from scan data and downloaded as text files.
         """)
 
+        # Generate a new report
         if st.button("Generate New Report"):
-            if "port_df" in st.session_state and st.session_state.port_df is not None:
+            if 'scan_data' in st.session_state and st.session_state.scan_data:
                 with st.spinner("Generating report..."):
-                    report = generate_vulnerability_report(st.session_state.port_df)
-                    st.session_state.reports.append(report)  # Save report in session state
+                    report = generate_vulnerability_report(st.session_state.scan_data)
+                    # Initialize reports list if not present
+                    if 'reports' not in st.session_state:
+                        st.session_state.reports = []
+                    st.session_state.reports.append(report)
                     st.success("Report generated and saved!")
             else:
                 st.error("No scan data available. Please perform a network scan first.")
 
-        # Display saved reports
-        if st.session_state.reports:
+        # Display and allow downloading of saved reports
+        if 'reports' in st.session_state and st.session_state.reports:
             st.subheader("Saved Reports")
             for i, report in enumerate(st.session_state.reports):
                 with st.expander(f"Report {i + 1}"):
-                    st.write(report)
+                    st.markdown(report)  # Display report in Markdown format for better readability
+                    # Provide a download button for the report as a .txt file
+                    st.download_button(
+                        label="Download Report as TXT",
+                        data=report,
+                        file_name=f"vulnerability_report_{i + 1}.txt",
+                        mime="text/plain"
+                    )
         else:
             st.info("No reports available. Generate a report to view it here.")
 
